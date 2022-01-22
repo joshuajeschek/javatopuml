@@ -22,6 +22,9 @@
     "email" : "joshua.jeschek@gmail.com",
     "url" : "https://github.com/joshuajeschek"
   },
+  "repository": "github:/joshuajeschek/javatopuml",
+  "bugs": "https://github.com/joshuajeschek/javatopuml/issues",
+  "homepage": "https://github.com/joshuajeschek/javatopuml",
   "license": "MIT",
   "devDependencies": {
     "prettier": "^2.5.1",
