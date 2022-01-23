@@ -11,7 +11,7 @@ Tool to create [PlantUML](https://plantuml.com/) Class-Diagrams from Java Code.
         ```
     * yarn:
         ```console
-        yarn add global javatopuml
+        yarn global add javatopuml
         ```
 
 2. Invoke in any Java Project
