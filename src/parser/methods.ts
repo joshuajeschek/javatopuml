@@ -48,7 +48,8 @@ function getParameters(descriptor: string): string[] {
     if (allParamsMatch.length === 0) return [];
 
     // TODO fix regex (e.g. if [ is followed by multiple arguments)
-    const singleParamsResult = allParamsMatch.match(/L.*?;|[B|C|D|F|I|J|S|Z]|\[.*/);
+    // L.*?;|[BCDFIJSZ]|(\[.+?)L|[BCDFIJSZ]
+    const singleParamsResult = allParamsMatch.match(/L.*?;|[BCDFIJSZ]|\[.*/);
     if (!singleParamsResult) return [];
 
     const parameters: string[] = [];
