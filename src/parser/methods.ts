@@ -1,4 +1,4 @@
-import { Modifiers, getModifiers } from './util';
+import { Modifiers, getModifiers } from './modifiers';
 
 export interface Method {
     name: string;

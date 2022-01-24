@@ -1,7 +1,7 @@
 import XRegExp from 'xregexp';
 import { Field, getFields } from './fields';
 import { getMethods, Method } from './methods';
-import { Modifiers, getModifiers } from './util';
+import { Modifiers, getModifiers } from './modifiers';
 import { cleanJavaContent } from './util/cleaner';
 
 export interface Class {

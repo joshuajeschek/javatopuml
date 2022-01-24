@@ -25,12 +25,12 @@ export function getModifiers(input: string[] | string): { modifiers: Modifiers[]
     );
 
     let candidate = modifiedStringArray.at(0);
-    let modifier = candidate ? Modifiers[candidate as keyof typeof Modifiers] : undefined;
-    while (modifier !== undefined && candidate) {
-        modifiers.add(modifier);
+    let flag = candidate ? Modifiers[candidate as keyof typeof Modifiers] : undefined;
+    while (flag !== undefined && candidate) {
+        modifiers.add(flag);
         modifiedStringArray.shift();
         candidate = modifiedStringArray.at(0);
-        modifier = candidate ? Modifiers[candidate as keyof typeof Modifiers] : undefined;
+        flag = candidate ? Modifiers[candidate as keyof typeof Modifiers] : undefined;
     }
 
     return {
