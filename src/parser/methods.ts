@@ -1,11 +1,10 @@
-import { JavaClassFile, Utf8Info } from "java-class-tools";
-import { Flag, getFlags, getType } from "./util";
+import { Modifiers, getModifiers } from './util';
 
 export interface Method {
-    name: string,
-    returnType: string,
-    parameterTypes: string[],
-    flags: Flag[],
+    name: string;
+    returnType: string;
+    parameters: { name: string; type: string }[];
+    modifiers: Modifiers[];
 }
 
 /**
@@ -13,49 +12,56 @@ export interface Method {
  * @param javaClass - the java class to extract the methods from
  * @returns the methods of the class
  */
-export function getMethods(javaClass: JavaClassFile): Method[] {
+export function getMethods(possibleMethods: string[]): Method[] {
     const methods: Method[] = [];
-    const textDecoder = new TextDecoder();
 
-    javaClass.methods.forEach(m => {
-        const methodNameEntry = javaClass.constant_pool[m.name_index] as Utf8Info;
-        const descriptorEntry = javaClass.constant_pool[m.descriptor_index] as Utf8Info;
-        const descriptor = textDecoder.decode(new Uint8Array(descriptorEntry.bytes))
-        const accessFlags = m.access_flags;
-        methods.push({
-            name: textDecoder.decode(new Uint8Array(methodNameEntry.bytes)),
-            returnType: getReturn(descriptor),
-            parameterTypes: getParameters(descriptor),
-            flags: getFlags(accessFlags),
-        });
-    });
+    let index = 0;
+    for (let candidate of possibleMethods) {
+        candidate = candidate.replace(/=[\s\S]*$/, '');
+        // is not function
+        if (!candidate.includes('(')) continue;
+        const field = getMethod(candidate, index++);
+        if (field) methods.push(field);
+    }
 
     return methods;
 }
 
-function getReturn(descriptor: string): string {
-    const returnMatchArray = descriptor.match(/\)(.*$)/);
-    if (!returnMatchArray) return 'void';
-    const returnMatch = returnMatchArray[1];
-    if (returnMatch === 'V') return 'void';
-    return getType(returnMatch);
+function getMethod(possibleMethod: string, index: number): Method | undefined {
+    if (possibleMethod.replaceAll(/\s/g, '').length === 0) return;
+
+    const parameters: { name: string; type: string }[] = [];
+
+    const parameterMatch = possibleMethod.match(/(?<=\()[\s\S]*(?=\))/);
+    const rawParameters = parameterMatch
+        ? parameterMatch[0].split(/(?<!<[^>]*),/).filter((value) => !value.match(/^\s*$/))
+        : [];
+    let parameterIndex = 0;
+    rawParameters.forEach((rawParameter) => parameters.push(getParameter(rawParameter, parameterIndex++)));
+
+    const declarationArray = possibleMethod
+        .split('(')[0]
+        .split(' ')
+        .filter((value) => !value.match(/^\s*$/));
+    // name => last element in array
+    const name = declarationArray.pop();
+    const modifersAndType = getModifiers(declarationArray);
+
+    return {
+        modifiers: modifersAndType.modifiers,
+        name: name?.trim() ?? `method${index}`,
+        returnType: modifersAndType.newString.trim(),
+        parameters,
+    };
 }
 
-function getParameters(descriptor: string): string[] {
-    const allParamsResult = descriptor.match(/\((.*?)\)/);
-    if (!allParamsResult) return [];
-    const allParamsMatch = allParamsResult[1];
-    if (allParamsMatch.length === 0) return [];
+function getParameter(rawParameter: string, parameterIndex: number): { name: string; type: string } {
+    const rawParameterArray = rawParameter.split(' ');
+    const name = rawParameterArray.pop();
+    const type = rawParameterArray.join(' ');
 
-    // TODO fix regex (e.g. if [ is followed by multiple arguments)
-    const singleParamsResult = allParamsMatch.match(/L.*?;|[B|C|D|F|I|J|S|Z]|\[.*/);
-    if (!singleParamsResult) return [];
-
-    const parameters: string[] = [];
-
-    singleParamsResult.forEach(singleParamMatch => {
-        parameters.push(getType(singleParamMatch));
-    });
-
-    return parameters;
+    return {
+        name: name ? name.trim() : `param${parameterIndex}`,
+        type: !type.match(/^\s*$/) ? type.trim() : `type${parameterIndex}`,
+    };
 }

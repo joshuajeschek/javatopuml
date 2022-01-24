@@ -23,3 +23,7 @@ Tool to create [PlantUML](https://plantuml.com/) Class-Diagrams from Java Code.
 ### Options
 404: Options not found
 <!-- TODO -->
+
+## know limitations
+* the code has only been tested with valid java code, and not extensively
+* records do not work yet.

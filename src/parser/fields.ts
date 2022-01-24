@@ -1,10 +1,9 @@
-import { JavaClassFile, Utf8Info } from "java-class-tools";
-import { Flag, getFlags, getType } from "./util";
+import { Modifiers, getModifiers } from './util';
 
 export interface Field {
-    name: string,
-    type: string,
-    flags: Flag[],
+    name: string;
+    type: string;
+    modifiers: Modifiers[];
 }
 
 /**
@@ -12,21 +11,32 @@ export interface Field {
  * @param javaClass - the java class to extract the methods from
  * @returns the methods of the class
  */
-export function getFields(javaClass: JavaClassFile): Field[] {
+export function getFields(possibleFields: string[]): Field[] {
     const fields: Field[] = [];
-    const textDecoder = new TextDecoder();
 
-    javaClass.fields.forEach(m => {
-        const methodNameEntry = javaClass.constant_pool[m.name_index] as Utf8Info;
-        const descriptorEntry = javaClass.constant_pool[m.descriptor_index] as Utf8Info;
-        const descriptor = textDecoder.decode(new Uint8Array(descriptorEntry.bytes))
-        const accessFlags = m.access_flags;
-        fields.push({
-            name: textDecoder.decode(new Uint8Array(methodNameEntry.bytes)),
-            type: getType(descriptor),
-            flags: getFlags(accessFlags),
-        });
-    });
+    let index = 0;
+    for (let candidate of possibleFields) {
+        candidate = candidate.replace(/=[\s\S]*$/, '');
+        // is function
+        if (candidate.includes('(')) continue;
+        const field = getField(candidate, index++);
+        if (field) fields.push(field);
+    }
 
     return fields;
+}
+
+function getField(possibleField: string, index: number): Field | undefined {
+    if (possibleField.replaceAll(/\s/g, '').length === 0) return;
+
+    const fieldArray = possibleField.split(' ').filter((value) => !value.match(/^\s*$/));
+    // name => last element in array
+    const name = fieldArray.pop();
+    const modifiersAndType = getModifiers(fieldArray);
+
+    return {
+        modifiers: modifiersAndType.modifiers,
+        name: name?.trim() ?? `field${index}`,
+        type: !modifiersAndType.newString.match(/^\s*$/) ? modifiersAndType.newString.trim() : `type${index}`,
+    };
 }
