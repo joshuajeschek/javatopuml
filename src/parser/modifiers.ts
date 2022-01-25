@@ -13,7 +13,7 @@ export enum Modifier {
 }
 
 /**
- * Extracts modifiers
+ * Extracts modifiers from a string (only if they are at the beginning).
  * @param input String that starts with modifiers / already split string
  * @returns all modifiers as modifiers and the new string (without modifiers)
  */

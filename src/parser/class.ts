@@ -15,8 +15,21 @@ export interface Class {
     values?: string[]; // only for enums
 }
 
-export function getClass(fileContent: string, packageName?: string, preAmble?: string[], className?: string): Class {
-    let javaContent = cleanJavaContent(fileContent);
+/**
+ * extracts class information from a java class code string
+ * @param javaContent the content of a java file
+ * @param packageName [the name of the package the java file belongs to]
+ * @param preAmble [the preamble of a java file (for inner classes)]
+ * @param className [the classname, useful for inner classes]
+ * @returns the class object
+ */
+export async function getClass(
+    javaContent: string,
+    packageName?: string,
+    preAmble?: string[],
+    className?: string,
+): Promise<Class> {
+    javaContent = cleanJavaContent(javaContent);
 
     // class is an inner class, preamble was already extracted
     if (!preAmble) {
@@ -57,7 +70,7 @@ export function getClass(fileContent: string, packageName?: string, preAmble?: s
             isInnerClass = matchElement.value;
         } else if (isInnerClass && matchElement.name === 'match') {
             const innerJavaContent = `${isInnerClass} { ${matchElement.value} }`;
-            classes.push(getClass(innerJavaContent, packageName, preAmble));
+            classes.push(await getClass(innerJavaContent, packageName, preAmble));
             isInnerClass = false;
         } else if (matchElement.name === 'between') {
             investigatables = investigatables.concat(matchElement.value.split(';'));

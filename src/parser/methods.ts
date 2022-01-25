@@ -8,7 +8,7 @@ export interface Method {
 }
 
 /**
- * Extracts all Methods from a Java Class
+ * Extracts all Methods from a Java Class.
  * @param javaClass - the java class to extract the methods from
  * @returns the methods of the class
  */
@@ -27,6 +27,12 @@ export function getMethods(possibleMethods: string[]): Method[] {
     return methods;
 }
 
+/**
+ * Extracts information about a single Method from a string.
+ * @param possibleMethod the string that may be contain Method information
+ * @param index the index of the Method to create placeholders if needed
+ * @returns the extracted Method, or undefined if it was not possible
+ */
 function getMethod(possibleMethod: string, index: number): Method | undefined {
     if (possibleMethod.replaceAll(/\s/g, '').length === 0) return;
 
@@ -55,6 +61,12 @@ function getMethod(possibleMethod: string, index: number): Method | undefined {
     };
 }
 
+/**
+ * Extracts parameter information from a string.
+ * @param rawParameter the raw parameter information string
+ * @param parameterIndex the index of the parameter to create placeholders if needed
+ * @returns the name and type of the parameter
+ */
 function getParameter(rawParameter: string, parameterIndex: number): { name: string; type: string } {
     const rawParameterArray = rawParameter.split(' ');
     const name = rawParameterArray.pop();

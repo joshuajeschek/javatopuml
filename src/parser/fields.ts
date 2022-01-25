@@ -26,6 +26,12 @@ export function getFields(possibleFields: string[]): Field[] {
     return fields;
 }
 
+/**
+ * Extracts imformation about a single Field from a string.
+ * @param possibleField the string that may contain information about a field
+ * @param index the index of the Field to create placeholders if needed
+ * @returns the extracted Field or undefined if it was not possible
+ */
 function getField(possibleField: string, index: number): Field | undefined {
     if (possibleField.replaceAll(/\s/g, '').length === 0) return;
 

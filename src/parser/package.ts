@@ -1,8 +1,7 @@
-import { promise as glob } from 'glob-promise';
 import { Class, getClass } from './class';
-import path, { join, normalize, parse } from 'path';
-import { statSync } from 'fs';
-import { readFile } from 'fs/promises';
+import path, { join, normalize } from 'node:path';
+import { findJavaFiles, findSubPackages } from '../files';
+import { readFile } from 'node:fs/promises';
 
 export interface Package {
     name: string;
@@ -10,78 +9,44 @@ export interface Package {
     classes: Class[];
 }
 
-export async function getPackage(root: string, name?: string): Promise<Package | undefined> {
+/**
+ * Parses a directory and the contained java files.
+ * @param root the root directory of the package
+ * @param name [the name of the package]
+ * @returns the package with all of its contents
+ */
+export async function getPackage(root: string, name?: string): Promise<Package> {
     root = normalize(root);
-    const pRoot = await findPackage(root, name);
 
-    if (!pRoot) return;
-    root = pRoot;
+    if (!name) name = extractName(root);
 
-    if (!name) {
-        name = root.split(join('src', 'main', 'java')).at(-1)?.replaceAll(path.sep, '.');
-    }
-    if (!name) return;
-    name = name.startsWith('.') ? name.replace('.', '') : name;
-
-    const directories = (await glob(join(root, '*')))
-        .filter((value) => statSync(value).isDirectory())
-        .map((value) => value.replaceAll('/', path.sep));
-
+    const subPackages = await findSubPackages(root);
     const packages: Package[] = [];
 
-    for (const directory of directories) {
-        const subName = directory.split(path.sep).at(-1);
-        const p = subName ? await getPackage(directory, `${name}.${subName}`) : undefined;
-        if (p) packages.push(p);
+    let subIndex = 0;
+    for (const subPackage of subPackages) {
+        const subName = subPackage.name ? `${name}.${subPackage.name}` : `${name}.sub${subIndex++}`;
+        packages.push(await getPackage(subPackage.root, subName));
     }
 
     const classes: Class[] = [];
 
-    const javaFiles = await glob(join(root, '*.java'));
+    const javaFiles = await findJavaFiles(root);
 
     for (const javaFile of javaFiles) {
-        const fileContent = await readFile(javaFile, 'utf-8');
-        classes.push(getClass(fileContent));
+        classes.push(await getClass(await readFile(javaFile, 'utf-8')));
     }
 
     return { name, packages, classes };
 }
 
-async function findPackage(root: string, name?: string): Promise<string | undefined> {
-    if (name) {
-        const packageDir = join.apply(null, name.split('.'));
-        const needs = join('src', 'main', 'java', packageDir);
-
-        if (root.includes(needs)) return trimPath(root, needs);
-
-        const wanted = join(root, needs);
-        return statSync(wanted).isDirectory() ? wanted : undefined;
-    }
-
-    // no src/main/java found
-    if (root.includes(join('src', 'main', 'java'))) {
-        root = await trimPath(root, join('src', 'main', 'java'));
-    } else if (statSync(join(root, 'src', 'main', 'java')).isDirectory()) {
-        root = join(root, 'src', 'main', 'java');
-    } else {
-        return;
-    }
-
-    const globbed = await glob(join(root, '**', '*.java'));
-    if (globbed.length === 0) return;
-
-    globbed.sort((a, b) => {
-        return a.split('/').length - b.split('/').length;
-    });
-    return normalize(parse(globbed[0]).dir);
-}
-
-async function trimPath(root: string, needs: string): Promise<string> {
-    let current = root;
-    let next = parse(root).dir;
-    while (next.includes(needs)) {
-        current = next;
-        next = parse(next).dir;
-    }
-    return current;
+/**
+ * Extracts the package name from a path.
+ * @param root the path
+ * @returns the extracted name, 'unknown.package' if no 'src/main/java' directory was found
+ */
+function extractName(root: string): string {
+    let name = root.split(join('src', 'main', 'java')).at(-1)?.replaceAll(path.sep, '.');
+    name = name ?? 'unknown.package';
+    return name.startsWith('.') ? name.replace('.', '') : name;
 }
