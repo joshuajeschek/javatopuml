@@ -1,10 +1,10 @@
-import { Modifiers, getModifiers } from './modifiers';
+import { Modifier, getModifiers } from './modifiers';
 
 export interface Method {
     name: string;
     returnType: string;
     parameters: { name: string; type: string }[];
-    modifiers: Modifiers[];
+    modifiers: Modifier[];
 }
 
 /**

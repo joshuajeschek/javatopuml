@@ -1,9 +1,9 @@
-import { Modifiers, getModifiers } from './modifiers';
+import { Modifier, getModifiers } from './modifiers';
 
 export interface Field {
     name: string;
     type: string;
-    modifiers: Modifiers[];
+    modifiers: Modifier[];
 }
 
 /**

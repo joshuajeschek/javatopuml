@@ -1,14 +1,14 @@
 import XRegExp from 'xregexp';
 import { Field, getFields } from './fields';
 import { getMethods, Method } from './methods';
-import { Modifiers, getModifiers } from './modifiers';
+import { Modifier, getModifiers } from './modifiers';
 import { cleanJavaContent } from './util/cleaner';
 
 export interface Class {
     name: string;
     extends: string | undefined;
     implements: string[];
-    modifiers: Modifiers[];
+    modifiers: Modifier[];
     fields: Field[];
     methods: Method[];
     classes: Class[];
@@ -72,7 +72,7 @@ export function getClass(fileContent: string, packageName?: string, preAmble?: s
     const extendsClass = classDeclaration ? getExtends(classDeclaration, preAmble) : undefined;
     const modifiers = classDeclaration ? getModifiers(classDeclaration).modifiers : [];
     const implementsClasses = classDeclaration ? getImplements(classDeclaration, preAmble) : [];
-    const values = modifiers.includes(Modifiers.enum) ? classContent?.split(',') : undefined;
+    const values = modifiers.includes(Modifier.enum) ? classContent?.split(',') : undefined;
 
     return {
         name: `${packageName}.${className}`,

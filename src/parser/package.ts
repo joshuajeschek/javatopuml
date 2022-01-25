@@ -4,7 +4,7 @@ import path, { join, normalize, parse } from 'path';
 import { statSync } from 'fs';
 import { readFile } from 'fs/promises';
 
-interface Package {
+export interface Package {
     name: string;
     packages: Package[];
     classes: Class[];
