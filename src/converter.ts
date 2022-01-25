@@ -1,9 +1,9 @@
-import dedent from "endent";
-import { Class } from "./parser/class";
-import { Field } from "./parser/fields";
-import { Method } from "./parser/methods";
-import { Modifier as Modifier } from "./parser/modifiers";
-import { Package } from "./parser/package";
+import dedent from 'endent';
+import { Class } from './parser/class';
+import { Field } from './parser/fields';
+import { Method } from './parser/methods';
+import { Modifier as Modifier } from './parser/modifiers';
+import { Package } from './parser/package';
 
 export function convert(javaPackage: Package): string {
     return dedent`
@@ -17,7 +17,7 @@ export function convert(javaPackage: Package): string {
 
 function getPackagePuml(javaPackage: Package | Package[]): string {
     if (!('name' in javaPackage)) {
-        return javaPackage.map(jp => getPackagePuml(jp)).join('\n\n');
+        return javaPackage.map((jp) => getPackagePuml(jp)).join('\n\n');
     }
 
     return dedent`
@@ -28,12 +28,12 @@ function getPackagePuml(javaPackage: Package | Package[]): string {
 
             ${javaPackage.packages.length ? `' === packages (${javaPackage.name}) ===` : ''}
             ${getPackagePuml(javaPackage.packages)}
-        }`
+        }`;
 }
 
 function getClassPuml(javaClass: Class | Class[]): string {
     if (!('name' in javaClass)) {
-        return javaClass.map(jc => getClassPuml(jc)).join('\n\n');
+        return javaClass.map((jc) => getClassPuml(jc)).join('\n\n');
     }
 
     return dedent`
@@ -46,22 +46,24 @@ function getClassPuml(javaClass: Class | Class[]): string {
 
             ${javaClass.methods.length ? `' --- methods (${javaClass.name}) ---` : ''}
             ${getMethodPuml(javaClass.methods)}
-        }`
+        }`;
 }
 
 function getFieldPuml(javaField: Field | Field[]): string {
     if (!('name' in javaField)) {
-        return javaField.map(jf => getFieldPuml(jf)).join('\n');
+        return javaField.map((jf) => getFieldPuml(jf)).join('\n');
     }
-    return `${getModifierPuml(javaField.modifiers)}${javaField.type} ${javaField.name}`
+    return `${getModifierPuml(javaField.modifiers)}${javaField.type} ${javaField.name}`;
 }
 
 function getMethodPuml(javaMethod: Method | Method[]): string {
     if (!('name' in javaMethod)) {
-        return javaMethod.map(jm => getMethodPuml(jm)).join('\n');
+        return javaMethod.map((jm) => getMethodPuml(jm)).join('\n');
     }
-    return `${getModifierPuml(javaMethod.modifiers)}${javaMethod.returnType} ` +
+    return (
+        `${getModifierPuml(javaMethod.modifiers)}${javaMethod.returnType} ` +
         `${javaMethod.name}(${javaMethod.parameters.map(({ name, type }) => `${type} ${name}`).join(', ')})`
+    );
 }
 
 function getClassType(javaModifiers: Modifier[]): string {
@@ -73,7 +75,7 @@ function getClassType(javaModifiers: Modifier[]): string {
 }
 
 function getModifierPuml(javaModifiers: Modifier[]): string {
-    let modifiers = ''
+    let modifiers = '';
     if (javaModifiers.includes(Modifier.static)) {
         modifiers += '{static}';
     } else if (javaModifiers.includes(Modifier.abstract)) {
