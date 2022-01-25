@@ -1,6 +1,6 @@
 import { promise as glob } from 'glob-promise';
 import { dir } from 'node:console';
-import { statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import path, { join, normalize, parse } from 'node:path';
 
 /**
@@ -10,6 +10,7 @@ import path, { join, normalize, parse } from 'node:path';
  * @returns the directory of the package
  */
 export async function findPackage(root: string, name?: string): Promise<string | undefined> {
+    root = normalize(root);
     if (name) {
         const packageDir = join.apply(null, name.split('.'));
         const needs = join('src', 'main', 'java', packageDir);
@@ -17,22 +18,23 @@ export async function findPackage(root: string, name?: string): Promise<string |
         if (root.includes(needs)) return trimPath(root, needs);
 
         const wanted = join(root, needs);
+        if (!existsSync(wanted)) return;
         return statSync(wanted).isDirectory() ? wanted : undefined;
     }
 
     // no src/main/java with name in root found
     if (root.includes(join('src', 'main', 'java'))) {
         root = await trimPath(root, join('src', 'main', 'java'));
-    } else if (statSync(join(root, 'src', 'main', 'java')).isDirectory()) {
-        root = join(root, 'src', 'main', 'java');
     } else {
-        // no src/main/java found in subdirectories
-        return;
+        if (!existsSync(join(root, 'src', 'main', 'java'))) return;
+        if (!statSync(join(root, 'src', 'main', 'java')).isDirectory()) return;
+        root = join(root, 'src', 'main', 'java');
     }
 
     // root now ends with src/main/java
     if (name) {
         const wanted = join(root, join.apply(null, name.split('.')));
+        if (!existsSync(wanted)) return;
         return statSync(wanted).isDirectory() ? wanted : undefined;
     }
 
@@ -46,7 +48,7 @@ export async function findPackage(root: string, name?: string): Promise<string |
 
 export async function findSubPackages(root: string): Promise<{ root: string; name?: string }[]> {
     return (await glob(join(root, '*')))
-        .filter((value) => statSync(value).isDirectory())
+        .filter((value) => existsSync(value) && statSync(value).isDirectory())
         .filter(async (value) => containsJavaFiles(value))
         .map((value) => value.replaceAll('/', path.sep))
         .map((value) => {
@@ -60,7 +62,7 @@ async function containsJavaFiles(root: string): Promise<boolean> {
 
 export async function findJavaFiles(root: string): Promise<string[]> {
     return (await glob(join(root, '*.java')))
-        .filter((value) => statSync(value).isFile)
+        .filter((value) => existsSync(value) && statSync(value).isFile)
         .map((value) => value.replaceAll('/', path.sep));
 }
 
