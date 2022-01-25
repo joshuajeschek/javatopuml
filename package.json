@@ -1,12 +1,13 @@
 {
   "name": "javatopuml",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Extracts PlantUML from Java Code",
   "files": [
     "dist/**/*"
   ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": "dist/bin/javatopuml.js",
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
