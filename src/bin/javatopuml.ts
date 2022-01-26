@@ -19,9 +19,15 @@ const argv = yargs(process.argv.slice(2))
         path: 'The path of the java project',
     })
     .example('javatopuml', 'Generates a class diagram of the project the command is invoked in')
-    .example('javatopuml my.super.nice.package', 'Generates a class diagram of the package, if it can be found in the current project')
+    .example(
+        'javatopuml my.super.nice.package',
+        'Generates a class diagram of the package, if it can be found in the current project',
+    )
     .example('javatopuml --format=txt', 'Outputs to <packagename>.txt instead of <packagename>.puml')
-    .example('javatopuml --output=classdiagrams', 'Outputs to ./classdiagrams/<packagename>.puml instead of ./target/plantuml/<packagename>.puml')
+    .example(
+        'javatopuml --output=classdiagrams',
+        'Outputs to ./classdiagrams/<packagename>.puml instead of ./target/plantuml/<packagename>.puml',
+    )
     .positional('packages', {})
     .parseSync();
 
