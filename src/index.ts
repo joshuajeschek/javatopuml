@@ -88,7 +88,6 @@ async function convertAndSave(
             return;
         }
         await writeFile(resultPath, packagePuml);
-        writeFile('test.json', JSON.stringify(javaPackage));
         return resultPath;
     }
     // multiple packages provided
