@@ -23,12 +23,7 @@ export interface Class {
  * @param className [the classname, useful for inner classes]
  * @returns the class object
  */
-export async function getClass(
-    javaContent: string,
-    packageName?: string,
-    preAmble?: string[],
-    className?: string,
-): Promise<Class> {
+export function getClass(javaContent: string, packageName?: string, preAmble?: string[], className?: string): Class {
     javaContent = cleanJavaContent(javaContent);
 
     // class is an inner class, preamble was already extracted
@@ -70,11 +65,19 @@ export async function getClass(
             isInnerClass = matchElement.value;
         } else if (isInnerClass && matchElement.name === 'match') {
             const innerJavaContent = `${isInnerClass} { ${matchElement.value} }`;
-            classes.push(await getClass(innerJavaContent, packageName, preAmble));
+            const innerClass = getClass(innerJavaContent, packageName, preAmble);
+            const nameArray = innerClass.name.split('.');
+            nameArray.splice(-1, 1, `${className}$${nameArray.at(-1)}`);
+            innerClass.name = nameArray.join('.');
+            classes.push(innerClass);
             isInnerClass = false;
         } else if (matchElement.name === 'between') {
             investigatables = investigatables.concat(matchElement.value.split(';'));
         }
+    }
+    // no inner curlies, everything is relevant
+    if (contentMatchArray.length === 0) {
+        investigatables = classContent?.split(';') ?? [];
     }
 
     investigatables = investigatables.filter((value) => !value.match(/^\s*$/));
@@ -92,10 +95,10 @@ export async function getClass(
         extends: extendsClass,
         modifiers,
         implements: implementsClasses,
-        fields,
-        methods,
-        classes,
-        values,
+        fields: modifiers.includes(Modifier.enum) ? [] : fields,
+        methods: modifiers.includes(Modifier.enum) ? [] : methods,
+        classes: modifiers.includes(Modifier.enum) ? [] : classes,
+        values: modifiers.includes(Modifier.enum) ? values : [],
     };
 }
 
@@ -170,7 +173,7 @@ function getExtends(classDeclaration: string, preAmble: string[]): string | unde
     const extendsClassName = extendsMatchArray ? extendsMatchArray[1] : undefined;
     if (!extendsClassName) return;
 
-    return getFQN(preAmble, extendsClassName);
+    return getFQN(preAmble, extendsClassName.trim());
 }
 
 /**
@@ -191,10 +194,9 @@ function getFQN(preAmble: string[], name: string) {
     let fqn = name;
 
     for (const candidate of preAmble) {
-        const candidateMatch = candidate.match(new RegExp('import ([a-z0-9.]*.' + name + ')'));
+        const candidateMatch = candidate.match(new RegExp('(?<=import )[a-z0-9.]*\\.' + name));
         if (candidateMatch) {
-            // console.log(candidateMatch[1]);
-            fqn = candidateMatch[1] ?? name;
+            fqn = candidateMatch[0] ?? name;
         }
     }
 

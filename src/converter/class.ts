@@ -8,12 +8,16 @@ import { getModifierPuml } from './modifier';
 /**
  * Converts a Java Class to PlantUML code.
  * @param javaClass the Java Class(es) to convert
+ * @param prefix [for inner classes]
  * @returns the generated PlantUML code (without @startuml/@enduml)
  */
 export function getClassPuml(javaClass: Class | Class[]): string {
     if (!('name' in javaClass)) {
         return javaClass.map((jc) => getClassPuml(jc)).join('\n\n');
     }
+
+    // if (javaClass.name.includes('Leven')) console.log('Leven Prefix:', prefix);
+    // if (javaClass.classes.length !== 0) console.log(javaClass, getClassName(javaClass.name.split('.').at(-1) ?? 'OuterClass', prefix));
 
     return dedent`
         ${getClassType(javaClass.modifiers)} ${javaClass.name} {
@@ -25,7 +29,9 @@ export function getClassPuml(javaClass: Class | Class[]): string {
 
             ${javaClass.methods.length ? `' --- methods (${javaClass.name}) ---` : ''}
             ${getMethodPuml(javaClass.methods)}
-        }`;
+        }
+        ${getClassPuml(javaClass.classes)}
+        ${getInnerClassConnections(javaClass.name, javaClass.classes).join('\n')}`;
 }
 
 /**
@@ -66,4 +72,7 @@ function getMethodPuml(javaMethod: Method | Method[]): string {
         `${getModifierPuml(javaMethod.modifiers)}${javaMethod.returnType} ` +
         `${javaMethod.name}(${javaMethod.parameters.map(({ name, type }) => `${type} ${name}`).join(', ')})`
     );
+}
+function getInnerClassConnections(name: string, classes: Class[]): string[] {
+    return classes.map((inner) => `${name} +-- ${inner.name}`);
 }

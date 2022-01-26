@@ -10,12 +10,28 @@ import { getPackage } from './parser/package';
 
 export { convert, getPackage, getPackagePuml, getClass, getClassPuml };
 
-interface Options {
+export interface Options {
+    [k: string]: any;
     output?: string;
     packages?: string | string[];
-    nestedClasses?: boolean;
-    outputFormat?: string;
+    linkbyfields?: boolean;
+    inheritance?: boolean;
+    format?: string;
 }
+
+const defaultOptions: Options = {
+    output: undefined,
+    packages: undefined,
+    linkbyfields: true,
+    inheritance: true,
+    format: 'puml',
+};
+
+const defaultHandler = {
+    get(target: Options, name: string) {
+        return target.hasOwnProperty(name) ? target[name] : defaultOptions[name];
+    },
+};
 
 /**
  * Converts Java Files to Plantuml and optionally saves them
@@ -24,8 +40,8 @@ interface Options {
  * @returns the resulting plantuml or the output paths, if options.output was specified
  */
 export default async function javatopuml(path: string, options?: Options): Promise<undefined | string | string[]> {
-    options = fillDefaultValues(options);
-    const packages = options.packages;
+    options = new Proxy(options ?? defaultOptions, defaultHandler);
+    const packages = options.packages?.length === 0 ? undefined : options.packages;
 
     if (options.output) return convertAndSave(path, packages, options);
 
@@ -33,7 +49,7 @@ export default async function javatopuml(path: string, options?: Options): Promi
         const packagePath = await findPackage(path, packages);
         if (!packagePath) return;
         const javaPackage = await getPackage(packagePath, packages);
-        const packagePuml = convert(javaPackage);
+        const packagePuml = convert(javaPackage, options);
         return packagePuml;
     }
 
@@ -59,19 +75,20 @@ async function convertAndSave(
     packages?: string | string[],
     options?: Options,
 ): Promise<string | string[] | undefined> {
-    options = fillDefaultValues(options);
+    if (!options) options = defaultOptions;
     // no packages or one package provided
     if (!packages || typeof packages === 'string') {
         const packagePath = await findPackage(path, packages);
         if (!packagePath) return;
         const javaPackage = await getPackage(packagePath, packages);
-        const packagePuml = convert(javaPackage);
-        const resultPath = join(options.output ?? '.', `${javaPackage.name}.${options.outputFormat}`);
+        const packagePuml = convert(javaPackage, options);
+        const resultPath = join(options.output ?? '.', `${javaPackage.name}.${options.format}`);
         const resultDir = parse(resultPath).dir;
         if (!existsSync(resultDir) && !(await mkdir(resultDir, { recursive: true }))) {
             return;
         }
         await writeFile(resultPath, packagePuml);
+        writeFile('test.json', JSON.stringify(javaPackage));
         return resultPath;
     }
     // multiple packages provided
@@ -83,18 +100,4 @@ async function convertAndSave(
     }
 
     return resultPaths;
-}
-
-/**
- * Autocompletes an options object.
- * @param options [the (not necessarily complete) options object]
- * @returns a complete options object, with default values inserted
- */
-function fillDefaultValues(options?: Options): Options {
-    return {
-        output: options?.output || undefined,
-        packages: options?.packages || undefined,
-        nestedClasses: options?.nestedClasses ?? true,
-        outputFormat: options?.outputFormat || 'puml',
-    };
 }

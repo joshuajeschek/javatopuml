@@ -34,10 +34,16 @@ export async function getPackage(root: string, name?: string): Promise<Package> 
     const javaFiles = await findJavaFiles(root);
 
     for (const javaFile of javaFiles) {
-        classes.push(await getClass(await readFile(javaFile, 'utf-8')));
+        // console.log(getClass(await readFile(javaFile, 'utf-8')));
+        classes.push(getClass(await readFile(javaFile, 'utf-8')));
     }
 
-    return { name, packages, classes };
+    // console.log(classes);
+
+    const result = { name, packages, classes };
+    matchPackageImports(result);
+
+    return result;
 }
 
 /**
@@ -49,4 +55,23 @@ function extractName(root: string): string {
     let name = root.split(join('src', 'main', 'java')).at(-1)?.replaceAll(path.sep, '.');
     name = name ?? 'unknown.package';
     return name.startsWith('.') ? name.replace('.', '') : name;
+}
+
+function matchPackageImports(result: Package): Package {
+    result.classes = result.classes.map((inheritor) => {
+        for (const candidate of result.classes) {
+            if (candidate.name.endsWith(`.${inheritor.extends}`)) {
+                inheritor.extends = candidate.name;
+            }
+            inheritor.implements.map((className) => {
+                if (candidate.name.endsWith(`.${className}`)) {
+                    return candidate;
+                }
+                return className;
+            });
+        }
+        return inheritor;
+    });
+
+    return result;
 }
