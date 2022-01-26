@@ -8,7 +8,7 @@ const log = console.log;
 
 const argv = yargs(process.argv.slice(2))
     .options({
-        path: { type: 'string', default: __dirname, defaultDescription: 'current directory' },
+        path: { type: 'string', default: '.', defaultDescription: 'current directory' },
         output: { type: 'string', default: './target/puml' },
         format: { type: 'string', default: 'puml' },
         linkbyfields: { type: 'boolean', default: true },
