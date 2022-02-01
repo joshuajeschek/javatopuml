@@ -64,6 +64,6 @@ Examples:
 | linkbyfields | true              | Wether the tool should generate links between classes based on the fields types.                          |
 | inheritance  | true              | Wether the tool should generate links based on inheritance (extends & implements)                         |
 
-## ⚠️ known limitations
+## know limitations
 * the code has only been tested with valid java code, and not extensively
 * records do not work yet.
